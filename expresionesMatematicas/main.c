@@ -17,7 +17,7 @@ int controlarExpresion(char *expresionTotal)
 
 int encontrarNumero(char **expresion)
 {
-    int unNumero = 0, numeral = 1, signo = 1, i = 0;
+    int unNumero = 0, signo = 1, i = 0;
     char *aux = *expresion;
     while(*aux && *aux != '*' && *aux != '/')
     {
@@ -36,8 +36,7 @@ int encontrarNumero(char **expresion)
             case '7':
             case '8':
             case '9':
-                unNumero = (unNumero * numeral) + (*aux - '0');
-                numeral = numeral * 10;
+                unNumero = (unNumero * 10) + (*aux - '0');
                 break;
             default:
                 break;
@@ -49,7 +48,7 @@ int encontrarNumero(char **expresion)
     return unNumero;
 }
 
-int resolverExpresion(char *expresion)
+int resolverExpresion(char *expresion, int **error)
 {
     int unNumero = 0, otroNumero = 0, signo = 1, resultado;
     char *aux = expresion, operando;
@@ -58,11 +57,18 @@ int resolverExpresion(char *expresion)
     {
         operando = *aux;
         *aux++;
+        if(*aux == '/' || *aux == '*')
+        {
+            **error = 1;
+            break;
+        }
         otroNumero = encontrarNumero(&aux);
         switch(operando)
         {
             case '/':
-                unNumero = unNumero / otroNumero;
+                if(otroNumero != 0)
+                  unNumero = unNumero / otroNumero;
+                else **error = 1;
                 break;
             case '*':
                 unNumero = unNumero * otroNumero;
@@ -112,13 +118,14 @@ int resolverExpresionCompleta(char *expresionTotal, int *error)
             cantidadDeExpresiones = i + 1;
             i = 0;
             int resolucionUnaExpresion, resolucionOtraExpresion;
-            if(cantidadDeExpresiones == 1) resultado = resolverExpresion(matrizDeExpresiones[i]);
+            if(cantidadDeExpresiones == 1) resultado = resolverExpresion(matrizDeExpresiones[i], &error);
             else
             {
-                resolucionUnaExpresion = resolverExpresion(matrizDeExpresiones[i]);
+                resolucionUnaExpresion = resolverExpresion(matrizDeExpresiones[i], &error);
                 while(i < cantidadDeExpresiones)
                 {
-                    resolucionOtraExpresion = resolverExpresion(matrizDeExpresiones[i+2]);
+                    if(error == 1) break;
+                    resolucionOtraExpresion = resolverExpresion(matrizDeExpresiones[i+2], &error);
                     switch(matrizDeExpresiones[i+1][0])
                     {
                         case '+':
@@ -140,7 +147,6 @@ int resolverExpresionCompleta(char *expresionTotal, int *error)
             *error = 1;
             return 0;
         }
-    *error = 0;
     return resultado;
 }
 
